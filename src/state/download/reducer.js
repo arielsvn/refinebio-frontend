@@ -37,15 +37,15 @@ export default (state = initialState, action) => {
 // Returns the dataset id stored in the state.
 export const getDataSetId = state => state.download && state.download.dataSetId;
 
-export function getExperimentCountBySpecies({ experiments, dataSet }) {
+export function getExperimentCountBySpecies(dataSet, experiments) {
   if (!dataSet || !experiments) return {};
   const species = {};
   for (const accessionCode of Object.keys(dataSet)) {
     const experimentInfo = experiments[accessionCode];
     if (!experimentInfo) return {};
 
-    const { organisms } = experimentInfo;
-    for (const organism of organisms) {
+    const { organism_names } = experimentInfo;
+    for (const organism of organism_names) {
       if (!species[organism]) species[organism] = 0;
       species[organism] += 1;
     }
@@ -54,12 +54,12 @@ export function getExperimentCountBySpecies({ experiments, dataSet }) {
   return species;
 }
 
-export function getTotalSamplesAdded({ dataSet }) {
+export function getTotalSamplesAdded(dataSet) {
   if (!dataSet) return 0;
   return union(...objectValues(dataSet)).length;
 }
 
-export function getTotalExperimentsAdded({ dataSet }) {
+export function getTotalExperimentsAdded(dataSet) {
   if (!dataSet) return 0;
   return Object.keys(dataSet).length;
 }

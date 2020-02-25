@@ -1,7 +1,7 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import classnames from 'classnames';
-import logo from '../../common/icons/logo-beta.svg';
+import logo from '../../common/icons/logo.svg';
 
 export default function Header({ isTv }) {
   return (
@@ -11,8 +11,10 @@ export default function Header({ isTv }) {
         'header--inverted': !isTv,
       })}
     >
-      <Link to="/">
-        <img src={logo} alt="refine.bio" className="header__logo" />
+      <Link href="/index" as="/">
+        <a>
+          <img src={logo} alt="refine.bio" className="header__logo" />
+        </a>
       </Link>
       | Executive Dashboard
     </header>

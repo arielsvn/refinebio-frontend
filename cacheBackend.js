@@ -6,11 +6,11 @@
 
 const axios = require('axios');
 const fs = require('fs');
-const _ = require('lodash');
 
 const version = process.env.VERSION || '0.0.0';
 const ApiVersion = 'v1';
-const ApiHost = `${process.env.REACT_APP_API_HOST || 'https://api.refine.bio'}/${ApiVersion}`;
+const ApiHost = `${process.env.REACT_APP_API_HOST ||
+  'https://api.refine.bio'}/${ApiVersion}`;
 
 // Call scripts at deploy time
 cacheServerData();
@@ -19,11 +19,13 @@ async function cacheServerData() {
   console.log(`Fetching data to be cached from endpoint: ${ApiHost}`);
   const [
     stats,
+    aboutStats,
     { organism, apiVersion },
     qnTargets,
     platforms,
   ] = await Promise.all([
     getStats(),
+    getAboutStats(),
     getSamplesPerOrganism(),
     getQnTargets(),
     getPlatforms(),
@@ -32,11 +34,28 @@ async function cacheServerData() {
     version, // remove `v` at the start of each version
     apiVersion,
     stats,
+    aboutStats,
     organism,
     qnTargets,
     platforms,
   };
   fs.writeFileSync(`src/apiData.json`, JSON.stringify(cache));
+}
+
+async function getAboutStats() {
+  try {
+    const { data } = await axios.get(`${ApiHost}/stats-about/`);
+    return data;
+  } catch {
+    // these numbers are important for the about page, if the requests fails
+    // use these numbers instead.
+    return {
+      samples_available: 904953 + 391022,
+      total_size_in_bytes: 832195361132962,
+      supported_organisms: 43 + 159,
+      experiments_processed: 35785 + 8661,
+    };
+  }
 }
 
 /**
@@ -82,22 +101,29 @@ async function getPlatforms() {
 }
 
 async function getQnTargets() {
-  const { data: qnTargets } = await axios.get(`${ApiHost}/qn_targets`);
-  return qnTargets.reduce(
-    (accum, { name: organismName }) => ({
-      ...accum,
-      [organismName]: true,
-    }),
-    {}
-  );
+  try {
+    const { data: qnTargets } = await axios.get(`${ApiHost}/qn_targets`);
+    return qnTargets.reduce(
+      (accum, { name: organismName }) => ({
+        ...accum,
+        [organismName]: true,
+      }),
+      {}
+    );
+  } catch {
+    console.log('Error fetching qn targets');
+    return false;
+  }
 }
 
-function getSamplesPerOrganism() {
-  return axios
-    .get(`${ApiHost}/search/?limit=1&offset=0`)
-    .then(response => ({
+async function getSamplesPerOrganism() {
+  try {
+    const response = await axios.get(`${ApiHost}/search/?limit=1&offset=0`);
+    return {
       organism: response.data.filters.organism,
       apiVersion: response.headers['x-source-revision'],
-    }))
-    .catch(error => false);
+    };
+  } catch {
+    return {};
+  }
 }
