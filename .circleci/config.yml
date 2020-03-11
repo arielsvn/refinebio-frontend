@@ -19,12 +19,13 @@ jobs:
       - run: yarn install --ignore-engines
       - run: yarn run test:integration
 
-  deploy:
+  deploy-staging:
     docker:
       - image: circleci/python:3-node
     steps:
       - checkout
-      - run: bash .circleci/deploy.sh
+      - run: yarn global add now
+      - run: $(yarn global bin)/now --prod --token $ZEIT_TOKEN --local-config now.staging.json --scope ccdl
 
 workflows:
   version: 2
@@ -32,12 +33,7 @@ workflows:
     jobs:
       - test
       - test_user
-      - deploy:
-          requires:
-            - test
-            - test_user
+      - deploy-staging:
           filters:
             branches:
-              only:
-                - master
-                - dev
+              only: dev

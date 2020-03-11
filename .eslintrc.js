@@ -1,11 +1,5 @@
 module.exports = {
-  extends: [
-    'airbnb',
-    'react-app',
-    'prettier',
-    'prettier/react',
-    'prettier/flowtype',
-  ],
+  extends: ['airbnb', 'prettier', 'prettier/react', 'prettier/flowtype'],
   plugins: ['react-hooks'],
   parser: 'babel-eslint',
   env: {
@@ -70,8 +64,5 @@ module.exports = {
 
     // deprecated
     'jsx-a11y/label-has-for': 0,
-
-    // TODO DISABLE THIS AFTER NEXTJS MIGRATION
-    'import/no-unresolved': 0,
   },
 };
