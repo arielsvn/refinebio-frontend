@@ -2,7 +2,6 @@
   "version": 2,
   "alias": "refinebio",
   "github": {
-    "enabled": false,
     "silent": true
   }
 }
