@@ -1,11 +1,5 @@
 module.exports = {
-  extends: [
-    'airbnb',
-    'react-app',
-    'prettier',
-    'prettier/react',
-    'prettier/flowtype',
-  ],
+  extends: ['airbnb', 'prettier', 'prettier/react', 'prettier/flowtype'],
   plugins: ['react-hooks'],
   parser: 'babel-eslint',
   env: {
@@ -37,6 +31,9 @@ module.exports = {
     'no-unused-vars': 2,
     'no-func-assign': 0,
 
+    // Nextjs forwards the Href tag automatically to `<a>` links
+    'jsx-a11y/anchor-is-valid': 0,
+
     // Not sure if we should enforce these rules.
     'class-methods-use-this': 0,
     'react/prop-types': 0,
@@ -61,6 +58,9 @@ module.exports = {
     'no-shadow': 'warn',
     'prefer-destructuring': 'warn',
     'no-param-reassign': 'warn',
+
+    // this should be fixed in header/headerA
+    'jsx-a11y/no-noninteractive-element-interactions': 'warn',
 
     // deprecated
     'jsx-a11y/label-has-for': 0,

@@ -1,4 +1,6 @@
 import React from 'react';
+import moment from 'moment';
+import { useRouter } from 'next/router';
 import * as chartSelectors from './chartSelectors';
 import DashboardSection from './DashboardSection';
 import TimeRangeSelect from '../../components/TimeRangeSelect';
@@ -7,12 +9,12 @@ import { useInterval } from '../../common/hooks';
 import { fetchDashboardData } from '../../api/dashboad';
 import Spinner from '../../components/Spinner';
 import ServerErrorPage from '../ServerError';
-import { getQueryParamObject, formatBytes } from '../../common/helpers';
-import './Dashboard.scss';
+import { formatBytes } from '../../common/helpers';
 
-function Dashboard(props) {
+function Dashboard() {
+  const router = useRouter();
   const [chartUpdating, setChartUpdating] = React.useState(true);
-  let { range: rangeParam } = getQueryParamObject(props.location.search);
+  let { range: rangeParam } = router.query;
   if (!['day', 'week', 'month', 'year'].includes(rangeParam)) {
     rangeParam = 'day';
   }
@@ -20,7 +22,10 @@ function Dashboard(props) {
   const { data, refresh, hasError } = useLoader(async () => {
     const stats = await fetchDashboardData(range);
     setChartUpdating(false);
-    return getDashboardChartConfig(stats, range);
+    return {
+      charts: getDashboardChartConfig(stats, range),
+      generatedOn: stats.generated_on,
+    };
   }, [range]);
 
   // refresh data every 10 mins
@@ -33,7 +38,7 @@ function Dashboard(props) {
   }
 
   return (
-    <div className="dashboard">
+    <div className="dashboard layout__content">
       <div className="dashboard__container">
         <TimeRangeSelect
           selectedOption={range}
@@ -49,12 +54,12 @@ function Dashboard(props) {
           }}
         />
 
-        <p>* All dates in UTC</p>
+        <DashboardUpdatedOn time={data && data.generatedOn} />
 
         {!data || chartUpdating ? (
           <Spinner />
         ) : (
-          data.map(section => {
+          data.charts.map(section => {
             const { title, charts } = section;
             return (
               <DashboardSection
@@ -71,6 +76,15 @@ function Dashboard(props) {
   );
 }
 export default Dashboard;
+
+function DashboardUpdatedOn({ time }) {
+  let result = 'Updated ...';
+  if (time) {
+    const duration = moment.duration(moment().diff(time)).humanize();
+    result = `Updated ${duration} ago`;
+  }
+  return <p>{result}</p>;
+}
 
 /**
  * Returns the options for the charts in the dashboard

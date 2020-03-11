@@ -2,8 +2,20 @@
  * This file contains helper methods that post to the CCDL slack channel
  */
 
+// btoa(webhook_url)
 const SLACK_HOOK_URL =
-  'aHR0cHM6Ly9ob29rcy5zbGFjay5jb20vc2VydmljZXMvVDYyR1g1UlFVL0JMOVQ1MlA2My9KeU5qNmhHamM3U09YZXNnMDFCU2k0VzE=';
+  'aHR0cHM6Ly9ob29rcy5zbGFjay5jb20vc2VydmljZXMvVDYyR1g1UlFVL0JCUzUyVDc5OC9UWnZZSGkzcnFyY29aSWYyaFlCVDZVdTA=';
+
+// get IP
+const getIP = async () => {
+  try {
+    const resp = await fetch('https://api.ipify.org?format=json');
+    const json = await resp.json();
+    return json.ip || 'Unknown IP';
+  } catch {
+    return 'Unknown IP';
+  }
+};
 
 /**
  * Send data to slack, configured in CCDL channel
@@ -17,10 +29,7 @@ export async function postToSlack(params) {
 }
 
 export async function submitSearchDataRequest(query, values) {
-  const { ip } = await (await fetch(
-    'https://api.ipify.org?format=json'
-  )).json();
-
+  const ip = await getIP();
   await postToSlack({
     attachments: [
       {
@@ -70,10 +79,7 @@ export async function submitSearchDataRequest(query, values) {
 }
 
 export async function submitExperimentDataRequest(accessionCode, values) {
-  const { ip } = await (await fetch(
-    'https://api.ipify.org?format=json'
-  )).json();
-
+  const ip = await getIP();
   await postToSlack({
     attachments: [
       {

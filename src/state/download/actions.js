@@ -136,6 +136,13 @@ export const removeSamples = (
   );
 
 /**
+ * Replaces the the entire data of the current dataset
+ * @param {*} newDataSet New dataset slice to be replaced
+ */
+export const replaceSamples = newDataSet => async dispatch =>
+  dispatch(dataSetUpdateOperation(() => newDataSet));
+
+/**
  * Use the dataset from the state
  */
 export const fetchDataSet = (details = false) => async (dispatch, getState) => {
@@ -186,7 +193,7 @@ export const fetchDataSet = (details = false) => async (dispatch, getState) => {
 
 // Remove all dataset
 export const clearDataSet = () => dispatch =>
-  dispatch(dataSetUpdateOperation(dataSet => ({})));
+  dispatch(dataSetUpdateOperation(() => ({})));
 
 /**
  * Gets detailed information about the samples and experiments associated with
@@ -213,11 +220,8 @@ export const fetchDataSetDetails = dataSetId => async (dispatch, getState) => {
  * edit some parameter of the dataset
  * @param {*} params additional params to be sent to the API
  */
-export const editDataSet = ({ dataSetId, ...params }) => async (
-  dispatch,
-  getState
-) => {
-  const { dataSet } = getState().download;
+export const editDataSet = ({ ...params }) => async (dispatch, getState) => {
+  const { id: dataSetId, dataSet } = getState().download;
   const {
     data,
     is_processing,
@@ -243,18 +247,8 @@ export const editDataSet = ({ dataSetId, ...params }) => async (
   );
 };
 
-export const editAggregation = ({ dataSetId, aggregation }) =>
-  editDataSet({ dataSetId, aggregate_by: aggregation.toUpperCase() });
-
-export const editTransformation = ({ dataSetId, transformation }) =>
-  editDataSet({ dataSetId, scale_by: transformation.toUpperCase() });
-
-export const editQuantileNormalize = ({ dataSetId, quantile_normalize }) =>
-  editDataSet({ dataSetId, quantile_normalize });
-
 export const startDownload = ({
   dataSetId,
-  dataSet,
   email,
   receiveUpdates = false,
 }) => async (dispatch, getState) => {
@@ -264,6 +258,9 @@ export const startDownload = ({
     tokenId = getState().token;
   }
 
+  // fetch the latest dataset before updating it.
+  const { data: dataSet } = await getDataSet(dataSetId, tokenId);
+
   try {
     await Ajax.put(
       `/v1/dataset/${dataSetId}/`,
@@ -271,7 +268,6 @@ export const startDownload = ({
         start: true,
         data: dataSet,
         token_id: tokenId,
-        quantile_normalize: false,
         ...(receiveUpdates ? { email_ccdl_ok: true } : {}),
         ...(email ? { email_address: email } : {}),
       },
@@ -292,14 +288,18 @@ export const startDownload = ({
     // if there's an error, redirect to the dataset page, and show a message
     // also with a button to try again
     return dispatch(
-      replace({
-        pathname: `/dataset/${dataSetId}`,
-        state: { hasError: true },
-      })
+      replace(
+        {
+          pathname: `/dataset/[dataSetId]`,
+          query: { dataSetId, hasError: true },
+        },
+        `/dataset/${dataSetId}`
+      )
     );
   }
 
   const currentDataSet = getState().download.dataSetId;
+
   if (currentDataSet === dataSetId) {
     // clear the current dataset if a download is started for it.
     await dispatch(dropDataSet());
@@ -307,10 +307,13 @@ export const startDownload = ({
 
   // redirect to the dataset page, and send the email address in the state
   return dispatch(
-    replace({
-      pathname: `/dataset/${dataSetId}`,
-      state: { email_address: email },
-    })
+    replace(
+      {
+        pathname: `/dataset/[dataSetId]`,
+        query: { dataSetId, emailAddress: email },
+      },
+      `/dataset/${dataSetId}`
+    )
   );
 };
 
@@ -319,7 +322,7 @@ export const startDownload = ({
  * to create a new dataset with the same data and redirect to it's page.
  */
 export const regenerateDataSet = dataSet => async dispatch => {
-  const { data, aggregate_by, scale_by } = dataSet;
+  const { data, aggregate_by, scale_by, quantile_normalize } = dataSet;
 
   try {
     // 1. create a new dataset
@@ -329,14 +332,18 @@ export const regenerateDataSet = dataSet => async dispatch => {
       data,
       aggregate_by,
       scale_by,
+      quantile_normalize,
     });
 
     // 3. redirect to the new dataset page, where the user will be able to add an email
     dispatch(
-      push({
-        pathname: `/dataset/${dataSetId}`,
-        state: { regenerate: true, dataSetId, dataSet: data },
-      })
+      push(
+        {
+          pathname: `/dataset/[dataSetId]`,
+          query: { dataSetId, regenerate: true },
+        },
+        `/dataset/${dataSetId}`
+      )
     );
   } catch (e) {
     dispatch(reportError(e));

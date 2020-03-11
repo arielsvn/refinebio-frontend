@@ -19,35 +19,21 @@ jobs:
       - run: yarn install --ignore-engines
       - run: yarn run test:integration
 
-  deploy:
+  deploy-staging:
     docker:
       - image: circleci/python:3-node
     steps:
       - checkout
-      - run: bash .circleci/verify_tag.sh
-      - run: bash .circleci/deploy.sh
+      - run: yarn global add now
+      - run: $(yarn global bin)/now --prod --token $ZEIT_TOKEN --local-config now.staging.json --scope ccdl
 
 workflows:
   version: 2
   test-and-deploy:
     jobs:
-      - test:
-          filters:
-            # To allow tag commits whose name start with "v" to trigger
-            # "test" job, an explicit "tags" filter is required here.
-            tags:
-              only: /v.*/
-      - test_user:
-          filters:
-            tags:
-              only: /v.*/
-      - deploy:
-          requires:
-            - test
-            - test_user
+      - test
+      - test_user
+      - deploy-staging:
           filters:
             branches:
-              # No branch commit will ever trigger this job.
-              ignore: /.*/
-            tags:
-              only: /v.*/
+              only: dev
