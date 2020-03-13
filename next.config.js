@@ -7,6 +7,8 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 const ApiHost = process.env.REACT_APP_API_HOST || 'https://api.refine.bio';
 
+// trigger dev change
+
 module.exports = withImages(
   withSass(
     withBundleAnalyzer({
